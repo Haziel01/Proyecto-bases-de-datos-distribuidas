@@ -9,8 +9,8 @@ Desarrollar un sistema de bases de datos distribuidas heterogéneas.
 *Actividad*:
 Desarrollar una aplicación sobre una arquitectura de base de datos distribuidas:
 + Base de Datos Distribuida OE.
- + Base de datos Homogénea.
- + Base de datos Distribuida Heterogénea (Oracle/SQL Server/MySQL/NoSQL).
+* Base de datos Homogénea.
+* Base de datos Distribuida Heterogénea (Oracle/SQL Server//NoSQL).
 + Utilizar al menos tres nodos.
 + Implementar los nodos del sistema distribuido mediante Docker.
 + Fragmentar la base de datos mediante el criterio de región.
