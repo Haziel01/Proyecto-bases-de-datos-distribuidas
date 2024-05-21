@@ -132,9 +132,6 @@ UNION ALL
 SELECT *
 FROM CUSTOMERSSTOREB;
 
-SELECT *
-FROM VistaCustomersGlobal;
-
 CREATE OR REPLACE VIEW VistaOrderItemsGlobal AS
 SELECT *
 FROM ORDER_ITEMS
@@ -142,18 +139,12 @@ UNION ALL
 SELECT *
 FROM ORDER_ITEMSSTOREB;
 
-SELECT *
-FROM VistaOrderItemsGlobal;
-
 CREATE OR REPLACE VIEW VistaOrdersGlobal AS
 SELECT *
 FROM ORDERS
 UNION ALL
 SELECT *
 FROM ORDERSSTOREB;
-
-SELECT *
-FROM VistaOrdersGlobal;
 
 /*PROCEDIMIENTOS CUSTOMERS*/
 CREATE OR REPLACE PROCEDURE insertCustomer(
@@ -178,17 +169,6 @@ BEGIN
     END IF;
 END insertCustomer;
 /
-/*A PARTIR DEL 982*/
-BEGIN
-    insertCustomer('982','Brandon','Ceballos','12000','Brandon.Ceballos@SCOTER.COM','E: 90,000 - 109,999','C');
-END;
-/
-
-SELECT *
-FROM CUSTOMERS;
-
-SELECT *
-FROM CUSTOMERSSTOREB;
 
 CREATE OR REPLACE PROCEDURE actualizaCustomer(
     p_CUSTOMER_ID IN NUMBER,
@@ -231,12 +211,6 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END actualizaCustomer;
 /
-BEGIN
-    actualizaCustomer('982','Brandon','Ceballos','3500','Brandon.Ceballos@SCOTER.COM','E: 90,000 - 109,999','C');
-END;
-/
-SELECT *
-FROM CUSTOMERSSTOREB;
 
 CREATE OR REPLACE PROCEDURE eliminarCustomer(
     p_CUSTOMER_ID IN NUMBER
@@ -260,39 +234,24 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END eliminarCustomer;
 /
-DECLARE
-    v_customer_id_to_delete NUMBER := 984;
-BEGIN
-    eliminarCustomer(v_customer_id_to_delete);
-END;
-/
-SELECT *
-FROM CUSTOMERSSTOREB;
 
 CREATE OR REPLACE PROCEDURE mostrarCustomer(
-    p_CUSTOMER_ID IN NUMBER
+    p_CUSTOMER_ID IN NUMBER,
+    o_customer_id OUT NUMBER,
+    o_cust_first_name OUT VARCHAR2,
+    o_cust_last_name OUT VARCHAR2,
+    o_credit_limit OUT NUMBER,
+    o_cust_email OUT VARCHAR2,
+    o_income_level OUT VARCHAR2,
+    o_region OUT VARCHAR2
 )
 AS
-    v_customer_id NUMBER;
-    v_cust_first_name VARCHAR2(50);
-    v_cust_last_name VARCHAR2(50);
-    v_credit_limit NUMBER;
-    v_cust_email VARCHAR2(100);
-    v_income_level VARCHAR2(50);
-    v_region VARCHAR2(10);
 BEGIN
     DBMS_MVIEW.REFRESH('todosCustomers', 'C');
-    SELECT *
-    INTO v_customer_id, v_cust_first_name, v_cust_last_name, v_credit_limit, v_cust_email, v_income_level, v_region
+    SELECT CUSTOMER_ID, CUST_FIRST_NAME, CUST_LAST_NAME, CREDIT_LIMIT, CUST_EMAIL, INCOME_LEVEL, REGION
+    INTO o_customer_id, o_cust_first_name, o_cust_last_name, o_credit_limit, o_cust_email, o_income_level, o_region
     FROM todosCustomers
     WHERE CUSTOMER_ID = p_CUSTOMER_ID;
-    DBMS_OUTPUT.PUT_LINE('Customer ID: ' || v_customer_id);
-    DBMS_OUTPUT.PUT_LINE('First Name: ' || v_cust_first_name);
-    DBMS_OUTPUT.PUT_LINE('Last Name: ' || v_cust_last_name);
-    DBMS_OUTPUT.PUT_LINE('Credit Limit: ' || v_credit_limit);
-    DBMS_OUTPUT.PUT_LINE('Email: ' || v_cust_email);
-    DBMS_OUTPUT.PUT_LINE('Income Level: ' || v_income_level);
-    DBMS_OUTPUT.PUT_LINE('Region: ' || v_region);
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
         RAISE_APPLICATION_ERROR(-20002, 'No se encontró ningún cliente con el ID proporcionado.');
@@ -300,14 +259,6 @@ EXCEPTION
         RAISE_APPLICATION_ERROR(-20003, 'Error: ' || SQLERRM);
 END mostrarCustomer;
 /
-DECLARE
-    v_customer_id NUMBER := 983;
-BEGIN
-    mostrarCustomer(v_customer_id);
-END;
-/
-
-SET SERVEROUTPUT ON;
 
 /*PROCEDIMIENTOS ORDERS*/
 /*INSERTAR*/
@@ -345,20 +296,6 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END insertarOrder;
 /
-BEGIN
-    insertarOrder(
-        103,                         -- p_ORDER_ID
-        SYSTIMESTAMP,                -- p_ORDER_DATE
-        'ONLINE',                    -- p_ORDER_MODE
-        852,                         -- p_CUSTOMER_ID
-        1,                           -- p_ORDER_STATUS
-        250.00,                      -- p_ORDER_TOTAL
-        125,                         -- p_SALES_REP_ID
-        458                          -- p_PROMOTION_ID
-    );
-END;
-/
-SELECT * FROM ORDERSSTOREB WHERE CUSTOMER_ID = 982;
 
 /*ACTUALIZAR*/
 CREATE OR REPLACE PROCEDURE actualizarOrder(
@@ -408,25 +345,6 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END actualizarOrder;
 /
-BEGIN
-    actualizarOrder(
-        2458,                         -- p_ORDER_ID
-        TO_TIMESTAMP('07-NOV-06 08.53.25.989889 PM'
-        ,'DD-MON-RR HH.MI.SS.FF AM'
-        ,'NLS_DATE_LANGUAGE=American'),                -- p_ORDER_DATE
-        'direct',                    -- p_ORDER_MODE
-        146,                         -- p_CUSTOMER_ID
-        1,                           -- p_ORDER_STATUS
-        250.00,                      -- p_ORDER_TOTAL
-        125,                         -- p_SALES_REP_ID
-        458                          -- p_PROMOTION_ID
-    );
-END;
-/
-SELECT * FROM ORDERS;
-SELECT * FROM ORDERSSTOREB;
-SELECT * FROM ORDERS WHERE ORDER_ID = 2379;
-SELECT * FROM ORDERSSTOREB WHERE ORDER_ID = 2379;
 
 /*ELIMINAR*/
 CREATE OR REPLACE PROCEDURE eliminarOrder(
@@ -462,68 +380,32 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END eliminarOrder;
 /
-BEGIN
-    eliminarOrder(103);
-END;
-/
-SELECT *
-FROM ORDERSSTOREB
-WHERE ORDER_ID = 103;
 
 /*MOSTRAR*/
-CREATE OR REPLACE PROCEDURE mostrarOrder(
-    p_ORDER_ID IN NUMBER
+CREATE OR REPLACE PROCEDURE mostrarOrder (
+    p_ORDER_ID IN NUMBER,
+    o_order_id OUT NUMBER,
+    o_order_date OUT TIMESTAMP,
+    o_order_mode OUT VARCHAR2,
+    o_order_status OUT NUMBER,
+    o_order_total OUT NUMBER,
+    o_sales_rep_id OUT NUMBER,
+    o_promotion_id OUT NUMBER
 )
 AS
-    v_CUSTOMER_ID CUSTOMERS.CUSTOMER_ID%TYPE;
-    v_REGION VARCHAR2(1);
-    v_ORDER_ID NUMBER;
-    v_ORDER_DATE TIMESTAMP;
-    v_ORDER_MODE VARCHAR2(8);
-    v_ORDER_STATUS NUMBER;
-    v_ORDER_TOTAL NUMBER;
-    v_SALES_REP_ID NUMBER;
-    v_PROMOTION_ID NUMBER;
 BEGIN
-    SELECT CUSTOMER_ID INTO v_CUSTOMER_ID
+    DBMS_MVIEW.REFRESH('todosOrders', 'C');
+    SELECT ORDER_ID, ORDER_DATE, ORDER_MODE, ORDER_STATUS, ORDER_TOTAL, SALES_REP_ID, PROMOTION_ID
+    INTO o_order_id, o_order_date, o_order_mode, o_order_status, o_order_total, o_sales_rep_id, o_promotion_id
     FROM todosOrders
     WHERE ORDER_ID = p_ORDER_ID;
-    SELECT REGION INTO v_REGION
-    FROM todosCustomers
-    WHERE CUSTOMER_ID = v_CUSTOMER_ID;
-    IF v_REGION = 'A' OR v_REGION = 'B' THEN
-        SELECT ORDER_ID, ORDER_DATE, ORDER_MODE, ORDER_STATUS, ORDER_TOTAL, SALES_REP_ID, PROMOTION_ID
-        INTO v_ORDER_ID, v_ORDER_DATE, v_ORDER_MODE, v_ORDER_STATUS, v_ORDER_TOTAL, v_SALES_REP_ID, v_PROMOTION_ID
-        FROM ORDERS
-        WHERE ORDER_ID = p_ORDER_ID;
-    ELSIF v_REGION = 'C' OR v_REGION = 'D' THEN
-        SELECT ORDER_ID, ORDER_DATE, ORDER_MODE, ORDER_STATUS, ORDER_TOTAL, SALES_REP_ID, PROMOTION_ID
-        INTO v_ORDER_ID, v_ORDER_DATE, v_ORDER_MODE, v_ORDER_STATUS, v_ORDER_TOTAL, v_SALES_REP_ID, v_PROMOTION_ID
-        FROM ORDERSSTOREB
-        WHERE ORDER_ID = p_ORDER_ID;
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Región no válida para el cliente.');
-        RETURN;
-    END IF;
-    DBMS_OUTPUT.PUT_LINE('Order ID: ' || v_ORDER_ID);
-    DBMS_OUTPUT.PUT_LINE('Order Date: ' || v_ORDER_DATE);
-    DBMS_OUTPUT.PUT_LINE('Order Mode: ' || v_ORDER_MODE);
-    DBMS_OUTPUT.PUT_LINE('Order Status: ' || v_ORDER_STATUS);
-    DBMS_OUTPUT.PUT_LINE('Order Total: ' || v_ORDER_TOTAL);
-    DBMS_OUTPUT.PUT_LINE('Sales Rep ID: ' || v_SALES_REP_ID);
-    DBMS_OUTPUT.PUT_LINE('Promotion ID: ' || v_PROMOTION_ID);
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró ninguna orden con el ID proporcionado.');
+        RAISE_APPLICATION_ERROR(-20002, 'No se encontró ninguna orden con el ID proporcionado.');
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        RAISE_APPLICATION_ERROR(-20003, 'Error: ' || SQLERRM);
 END mostrarOrder;
 /
-BEGIN
-    mostrarOrder(2365);
-END;
-/
-SET SERVEROUTPUT ON;
 
 /*PROCEDIMIENTOS ORDER ITEMS*/
 /*INSERTAR*/
@@ -582,20 +464,6 @@ EXCEPTION
 END insertarOrderItem;
 /
 
-BEGIN
-    insertarOrderItem(106, 1, 101, 50.00, 8);
-END;
-/
-SELECT *
-FROM ORDER_ITEMS;
-SELECT *
-FROM ORDER_ITEMSSTOREB;
-
-SELECT *
-FROM ORDERS;
-SELECT *
-FROM ORDERSSTOREB;
-
 /*ACTUALIZAR*/
 CREATE OR REPLACE PROCEDURE actualizarOrderItem(
     p_ORDER_ID IN NUMBER,
@@ -645,10 +513,6 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END actualizarOrderItem;
 /
-BEGIN
-    actualizarOrderItem(103, 1, 456, 55.00, 3);
-END;
-/
 
 /*ELIMINAR*/
 CREATE OR REPLACE PROCEDURE eliminarOrderItem(
@@ -692,66 +556,31 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END eliminarOrderItem;
 /
-BEGIN
-    eliminarOrderItem(2363, 7);
-END;
-/
 
 /*MOSTRAR*/
-CREATE OR REPLACE PROCEDURE mostrarOrderItem(
+CREATE OR REPLACE PROCEDURE mostrarOrderItem (
     p_ORDER_ID IN NUMBER,
-    p_LINE_ITEM_ID IN NUMBER
+    p_LINE_ITEM_ID IN NUMBER,
+    o_order_id OUT NUMBER,
+    o_line_item_ID OUT NUMBER,
+    o_PRODUCT_ID OUT NUMBER,
+    o_UNIT_PRICE OUT NUMBER,
+    o_QUANTITY OUT NUMBER
 )
-AS
-    v_CUSTOMER_ID CUSTOMERS.CUSTOMER_ID%TYPE;
-    v_REGION VARCHAR2(1);
-    v_PRODUCT_ID NUMBER;
-    v_UNIT_PRICE NUMBER;
-    v_QUANTITY NUMBER;
+AS 
 BEGIN
-    DBMS_MVIEW.REFRESH('todosCustomers', 'C');
-    DBMS_MVIEW.REFRESH('todosOrders', 'C');
-
-    SELECT CUSTOMER_ID INTO v_CUSTOMER_ID
-    FROM todosOrders
-    WHERE ORDER_ID = p_ORDER_ID;
-
-    SELECT REGION INTO v_REGION
-    FROM todosCustomers
-    WHERE CUSTOMER_ID = v_CUSTOMER_ID;
-
-    IF v_REGION = 'A' OR v_REGION = 'B' THEN
-        SELECT PRODUCT_ID, UNIT_PRICE, QUANTITY
-        INTO v_PRODUCT_ID, v_UNIT_PRICE, v_QUANTITY
-        FROM ORDER_ITEMS
-        WHERE ORDER_ID = p_ORDER_ID
-          AND LINE_ITEM_ID = p_LINE_ITEM_ID;
-    ELSIF v_REGION = 'C' OR v_REGION = 'D' THEN
-        SELECT PRODUCT_ID, UNIT_PRICE, QUANTITY
-        INTO v_PRODUCT_ID, v_UNIT_PRICE, v_QUANTITY
-        FROM ORDER_ITEMSSTOREB
-        WHERE ORDER_ID = p_ORDER_ID
-          AND LINE_ITEM_ID = p_LINE_ITEM_ID;
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('Región no válida para el cliente.');
-        RETURN;
-    END IF;
-
-    DBMS_OUTPUT.PUT_LINE('Order ID: ' || p_ORDER_ID);
-    DBMS_OUTPUT.PUT_LINE('Line Item ID: ' || p_LINE_ITEM_ID);
-    DBMS_OUTPUT.PUT_LINE('Product ID: ' || v_PRODUCT_ID);
-    DBMS_OUTPUT.PUT_LINE('Unit Price: ' || v_UNIT_PRICE);
-    DBMS_OUTPUT.PUT_LINE('Quantity: ' || v_QUANTITY);
+    DBMS_MVIEW.REFRESH('todosOrdersItems', 'C');
+    SELECT ORDER_ID, LINE_ITEM_ID, PRODUCT_ID, UNIT_PRICE, QUANTITY
+    INTO o_order_id, o_line_item_ID, o_PRODUCT_ID, o_UNIT_PRICE, o_QUANTITY
+    FROM todosOrdersItems
+    WHERE ORDER_ID = p_ORDER_ID
+    AND LINE_ITEM_ID = p_LINE_ITEM_ID;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró ningún item de orden con el ID proporcionado.');
+        RAISE_APPLICATION_ERROR(-20002, 'No se encontró ningún producto con el No. de orden o artículo proporcionado.');
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        RAISE_APPLICATION_ERROR(-20003, 'Error: ' || SQLERRM);
 END mostrarOrderItem;
-/
-BEGIN
-    mostrarOrderItem(2365, 1);
-END;
 /
 
 /*PRODUCT_INRORMATION*/
@@ -839,41 +668,31 @@ END eliminarProductItem;
 
 /* MOSTRAR */
 CREATE OR REPLACE PROCEDURE mostrarProductItem(
-    p_PRODUCT_ID IN NUMBER
+    p_PRODUCT_ID IN NUMBER,
+    o_PRODUCT_NAME OUT VARCHAR2,
+    o_PRODUCT_DESCRIPTION OUT VARCHAR2,
+    o_CATEGORY_ID OUT NUMBER,
+    o_WEIGHT_CLASS OUT NUMBER,
+    o_WARRANTY_PERIOD OUT VARCHAR2, -- Cambiado a VARCHAR2
+    o_SUPPLIER_ID OUT NUMBER,
+    o_PRODUCT_STATUS OUT VARCHAR2,
+    o_LIST_PRICE OUT NUMBER,
+    o_MIN_PRICE OUT NUMBER,
+    o_CATALOG_URL OUT VARCHAR2
 )
-AS
-    v_PRODUCT_NAME PRODUCT_INFORMATION.PRODUCT_NAME%TYPE;
-    v_PRODUCT_DESCRIPTION PRODUCT_INFORMATION.PRODUCT_DESCRIPTION%TYPE;
-    v_CATEGORY_ID PRODUCT_INFORMATION.CATEGORY_ID%TYPE;
-    v_WEIGHT_CLASS PRODUCT_INFORMATION.WEIGHT_CLASS%TYPE;
-    v_WARRANTY_PERIOD PRODUCT_INFORMATION.WARRANTY_PERIOD%TYPE;
-    v_SUPPLIER_ID PRODUCT_INFORMATION.SUPPLIER_ID%TYPE;
-    v_PRODUCT_STATUS PRODUCT_INFORMATION.PRODUCT_STATUS%TYPE;
-    v_LIST_PRICE PRODUCT_INFORMATION.LIST_PRICE%TYPE;
-    v_MIN_PRICE PRODUCT_INFORMATION.MIN_PRICE%TYPE;
-    v_CATALOG_URL PRODUCT_INFORMATION.CATALOG_URL%TYPE;
+AS 
 BEGIN
-    SELECT PRODUCT_NAME, PRODUCT_DESCRIPTION, CATEGORY_ID, WEIGHT_CLASS, WARRANTY_PERIOD, SUPPLIER_ID, PRODUCT_STATUS, LIST_PRICE, MIN_PRICE, CATALOG_URL
-    INTO v_PRODUCT_NAME, v_PRODUCT_DESCRIPTION, v_CATEGORY_ID, v_WEIGHT_CLASS, v_WARRANTY_PERIOD, v_SUPPLIER_ID, v_PRODUCT_STATUS, v_LIST_PRICE, v_MIN_PRICE, v_CATALOG_URL
+    SELECT PRODUCT_NAME, PRODUCT_DESCRIPTION, CATEGORY_ID, WEIGHT_CLASS, TO_CHAR(WARRANTY_PERIOD) AS WARRANTY_PERIOD,
+           SUPPLIER_ID, PRODUCT_STATUS, LIST_PRICE, MIN_PRICE, CATALOG_URL
+    INTO o_PRODUCT_NAME, o_PRODUCT_DESCRIPTION, o_CATEGORY_ID, o_WEIGHT_CLASS, o_WARRANTY_PERIOD,
+         o_SUPPLIER_ID,  o_PRODUCT_STATUS,  o_LIST_PRICE, o_MIN_PRICE, o_CATALOG_URL
     FROM PRODUCT_INFORMATION
     WHERE PRODUCT_ID = p_PRODUCT_ID;
-
-    DBMS_OUTPUT.PUT_LINE('Product ID: ' || p_PRODUCT_ID);
-    DBMS_OUTPUT.PUT_LINE('Product Name: ' || v_PRODUCT_NAME);
-    DBMS_OUTPUT.PUT_LINE('Product Description: ' || v_PRODUCT_DESCRIPTION);
-    DBMS_OUTPUT.PUT_LINE('Category ID: ' || v_CATEGORY_ID);
-    DBMS_OUTPUT.PUT_LINE('Weight Class: ' || v_WEIGHT_CLASS);
-    DBMS_OUTPUT.PUT_LINE('Warranty Period: ' || v_WARRANTY_PERIOD);
-    DBMS_OUTPUT.PUT_LINE('Supplier ID: ' || v_SUPPLIER_ID);
-    DBMS_OUTPUT.PUT_LINE('Product Status: ' || v_PRODUCT_STATUS);
-    DBMS_OUTPUT.PUT_LINE('List Price: ' || v_LIST_PRICE);
-    DBMS_OUTPUT.PUT_LINE('Min Price: ' || v_MIN_PRICE);
-    DBMS_OUTPUT.PUT_LINE('Catalog URL: ' || v_CATALOG_URL);
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('No se encontró ningún producto con el ID proporcionado.');
+        RAISE_APPLICATION_ERROR(-20002, 'No se encontró ningún producto con el ID proporcionado.');
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+        RAISE_APPLICATION_ERROR(-20003, 'Error: ' || SQLERRM);
 END mostrarProductItem;
 /
 
@@ -954,7 +773,7 @@ END;
 SELECT *
 FROM replicaProductInformationEnB;
 
-/*VISTAS MATERIALIZADAS*/
+-- Crear la Materialized View
 CREATE MATERIALIZED VIEW todosCustomers
 REFRESH COMPLETE ON DEMAND
 AS
@@ -963,6 +782,81 @@ FROM CUSTOMERS
 UNION ALL
 SELECT *
 FROM CUSTOMERSSTOREB;
+
+-- Crear el Procedimiento de Refresco
+CREATE OR REPLACE PROCEDURE refresh_todosCustomers
+AS
+BEGIN
+    DBMS_MVIEW.REFRESH('todosCustomers', 'C');
+END;
+/
+
+CREATE OR REPLACE PROCEDURE refresh_todosOrders
+AS
+BEGIN
+    DBMS_MVIEW.REFRESH('todosOrders', 'C');
+END;
+/
+
+CREATE OR REPLACE PROCEDURE refresh_todosOrdersItems
+AS
+BEGIN
+    DBMS_MVIEW.REFRESH('todosOrdersItems', 'C');
+END;
+/
+
+-- Crear el Job de Refresco con DBMS_SCHEDULER
+BEGIN
+    DBMS_SCHEDULER.create_job (
+        job_name        => 'refresh_todosCustomers_job',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN refresh_todosCustomers; END;',
+        start_date      => SYSTIMESTAMP,
+        repeat_interval => 'FREQ=SECONDLY; INTERVAL=360', -- Ajusta esto según la frecuencia deseada
+        enabled         => TRUE
+    );
+END;
+/
+
+BEGIN
+    DBMS_SCHEDULER.create_job (
+        job_name        => 'refresh_todosOrders_job',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN refresh_todosOrders; END;',
+        start_date      => SYSTIMESTAMP,
+        repeat_interval => 'FREQ=SECONDLY; INTERVAL=360', -- Ajusta esto según la frecuencia deseada
+        enabled         => TRUE
+    );
+END;
+/
+
+BEGIN
+    DBMS_SCHEDULER.create_job (
+        job_name        => 'refresh_todosOrdersItems_job',
+        job_type        => 'PLSQL_BLOCK',
+        job_action      => 'BEGIN refresh_todosOrdersItems; END;',
+        start_date      => SYSTIMESTAMP,
+        repeat_interval => 'FREQ=SECONDLY; INTERVAL=360', -- Ajusta esto según la frecuencia deseada
+        enabled         => TRUE
+    );
+END;
+/
+
+
+/*VISTAS MATERIALIZADAS*/
+
+CREATE MATERIALIZED VIEW todosCustomers
+REFRESH COMPLETE ON DEMAND
+AS
+SELECT *
+FROM CUSTOMERS
+UNION ALL
+SELECT *
+FROM CUSTOMERSSTOREB;
+
+SELECT *
+FROM todosCustomers
+ORDER BY CUSTOMER_ID;
 
 CREATE MATERIALIZED VIEW todosOrders
 REFRESH COMPLETE ON DEMAND
@@ -987,6 +881,12 @@ FROM ORDER_ITEMSSTOREB;
 
 SELECT *
 FROM todosOrdersItems;
+
+CREATE MATERIALIZED VIEW todosProductInformation
+REFRESH COMPLETE ON DEMAND
+AS
+SELECT *
+FROM PRODUCT_INFORMATION;
 
 CREATE MATERIALIZED VIEW orderCustomerRegion
 BUILD IMMEDIATE
